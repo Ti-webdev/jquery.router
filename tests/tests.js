@@ -1,16 +1,31 @@
 $(function() {
 	location.hash = ''
-	asyncTest('simple routing', 1, function () {
-		expect(1);
+		
+	asyncTest('simple routing', 2, function () {
 		$.router.remove().router('test', function() {
 			ok(true, 'location #test is fine')
+			setTimeout(function() { location.hash = 'test-2' }, 50)
+			return function() {
+				ok(true, 'rollback #test is fine')
+			}
 		})
 		location.hash = 'test'
-		setTimeout(start, 100)
+		setTimeout(start, 200)
 		/**
 		 * @todo test rollback
 		 * @todo test delete
 		 */
+	})
+	
+	asyncTest('simple routing, rollback as argument', 2, function () {
+		$.router.remove().router('test', function() {
+			ok(true, 'location #test is fine2')
+			location.hash = 'test-2'
+		}, function() {
+			ok(true, 'rollback #test is fine2')
+		})
+		location.hash = 'test'
+		setTimeout(start, 200)
 	})
 
 	asyncTest('history.back()', 2, function() {
@@ -47,8 +62,23 @@ $(function() {
 		 * @todo test delete
 		 */
 	})
-	
-	
+
+
+	asyncTest('RegExp', 2, function() {
+		$.router.remove().router(/^id=(\d+)$/, function(match, actualId) {
+			equals(id, actualId, "id is fine");
+			equals(match, 'id='+id, 'match is fine');
+		})
+		var id = Math.floor(Math.random()*1000)
+		location.hash = 'id='+id
+		setTimeout(start, 100)
+		/**
+		 * @todo test rollback
+		 * @todo test delete
+		 */
+	})
+
+
 	asyncTest('callback routing', 6, function() {
 		$.router.remove().router(function(hash) {
 			if ('test-callback' == hash) {
@@ -73,21 +103,6 @@ $(function() {
 		location.hash = 'test-callback'
 		setTimeout(start, 300)
 		/**
-		 * @todo test delete
-		 */
-	})
-
-
-	asyncTest('RegExp', 2, function() {
-		$.router.remove().router(/^id=(\d+)$/, function(match, actualId) {
-			equals(id, actualId, "id is fine");
-			equals(match, 'id='+id, 'match is fine');
-		})
-		var id = Math.floor(Math.random()*1000)
-		location.hash = 'id='+id
-		setTimeout(start, 100)
-		/**
-		 * @todo test rollback
 		 * @todo test delete
 		 */
 	})

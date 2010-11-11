@@ -18,11 +18,8 @@
  * })
  * 
  * detect id number: #id:1, #id:2, ...
- * $.router(function(hash) {
- * 		var result = /^id:(\d+)$/.exec(hash)
- * 		if (result) return function() {
- * 			alert('id is: '+result[1])
- * 		}
+ * $.router(/^id:(\d+)$/, function(m, id) {
+ * 		alert('id is: '+id)
  * })
  * 
  * $.router.remove('add')
@@ -39,7 +36,7 @@
  * The BSD licenses
  * http://en.wikipedia.org/wiki/BSD_licenses
  * 
- * @version 0.3
+ * @version 0.4
  * @url http://ti.y1.ru/jquery/router/
  * @author Ti
  * @see $.history
@@ -254,43 +251,55 @@
 	var history = []
 
 	var RouterRegExp = function(regExp, init, rollback) {
-		var matches
+		var matches, _rollback
 		this.test = function(hash) {
 			matches = regExp.exec(hash)
 			return matches && true
 		}
 		this.exec = function() {
-			return init.apply(null, matches) || rollback
+			_rollback = init.apply(null, matches) || rollback
+		}
+		this.rollback = function() {
+			if ('function' == typeof _rollback) _rollback.apply(matches)
 		}
 		this.remove = function(sign) {
 			if (regExp == sign) return true
 			if (init == sign) return true
 			if (rollback == sign) delete rollback
+			if (_rollback == sign) _rollback = null
 			return false
 		}
 	}
 	var RouterStatic = function(name, init, rollback) {
+		var _rollback
 		this.test = function(hash) {
 			return name == hash
 		}
 		this.exec = function() {
-			return init() || rollback
+			_rollback = init() || rollback
+		}
+		this.rollback = function() {
+			if ('function' == typeof _rollback) _rollback()
 		}
 		this.remove = function(sign) {
 			if (name == sign) return true
 			if (init == sign) return true
 			if (rollback == sign) delete rollback
+			if (_rollback == sign) _rollback = null
 			return false
 		}
 	}
 	var RouterMap = function(map, rollback) {
-		var init
+		var init, _rollback
 		this.test = function(hash) {
 			init = map[hash]
 			return init && true
 		}
 		this.exec = function(hash) {
-			return init() || rollback
+			_rollback = init() || rollback
+		}
+		this.rollback = function() {
+			if ('function' == typeof _rollback) _rollback()
 		}
 		this.remove = function(sign) {
 			if (map == sign) return true
@@ -311,40 +320,45 @@
 
 			if (init == sign) return true
 			if (rollback == sign) delete rollback
+			if (_rollback == sign) _rollback = null
 			return false
 		}
 	}
 	var RouterCallback = function(callback, rollback) {
-		var init, hash
+		var init, _rollback
 		this.test = function(hash) {
 			init = callback(hash)
 			return init && true
 		}
 		this.exec = function() {
-			return init() || rollback
+			_rollback = init() || rollback
+		}
+		this.rollback = function() {
+			if ('function' == typeof _rollback) _rollback()
 		}
 		this.remove = function(sign) {
 			if (callback == sign) return true
 			if (rollback == sign) delete rollback
+			if (_rollback == sign) _rollback = null
 			return false
 		}
 	}
 
 	var run = function(hash) {
-		var i = list.length-1
-		while(0 <= i) {
-			if (list[i].test(hash)) {
+		var i = list.length-1, found = false
+		while(!found && 0 <= i) {
+			found = list[i].test(hash)
+			if (found) {
 				runRouter(list[i])
-				history.push(hash)
-				break
 			}
 			i--
 		}
+		history.push(hash)
 	}
 
 	var runRouter = function(router) {
-		rollback = router.exec()
-		if ('function' == typeof rollback) $.router.rollback(rollback)
+		router.exec()
+		prevRouter = router
 	}
 
 
@@ -377,11 +391,12 @@
 	$.router.pop = function() {
 		return history.pop()
 	}
-	
+
 	$.router.remove = function(remove) {
 		// без аргументов - очистить все
 		if (0 == arguments.length) {
 			list = []
+			prevRouter = null
 			return $
 		}
 
@@ -389,7 +404,10 @@
 		$(arguments).each(function(i, signRoute) {
 			var r, newList = []
 			while(r = list.pop()) {
-				if (r.remove(signRoute)) continue
+				if (r.remove(signRoute)) {
+					if (prevRouter == r) prevRouter = null
+					continue
+				}
 				newFns.push(fn) 
 			}
 			list = newList
@@ -398,21 +416,11 @@
 		return $
 	}
 
-	/**
-	 * Устанавливает/запускает callback при изменении пути
-	 */
-	$.router.rollback = (function() {
-		var callback = $.noop
-		return function(newCallback) {
-			if (newCallback) callback = newCallback
-			else callback()
-			return $.router
-		}
-	})();
+	var prevRouter
 	
 	var init = function() {
 		$.history.init(function(hash) {
-			$.router.rollback().rollback($.noop) // запускаем и обнуляем откат предыдущего действия
+			if (prevRouter) prevRouter.rollback()
 			run(hash)
 		})
 	}

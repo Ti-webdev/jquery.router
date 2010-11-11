@@ -19,7 +19,7 @@ header('Content-Type: text/html; charset=UTF-8');
 </head>
 <body>
 	<h1>jQuery router plugin</h1>
-	<a href="jquery.router-0.3.js">Download jquery.router-0.3.js</a>
+	<a href="jquery.router-0.4.js">Download jquery.router-0.4.js</a>
 	<h2>Demo:</h2>
 	<pre><code><?= htmlspecialchars(file_get_contents('demo.html')) ?></code></pre>
 	<a href="#demo">run demo</a>
