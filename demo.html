@@ -1,0 +1,35 @@
+<script src="jquery-1.4.3.min.js" type="text/javascript"></script>
+<script src="jquery.router-0.3.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+$.router({
+	demo: function() {
+		var info = $('<div>This is #demo location.<br /><a href="#test">1. Open #test</a><br /></div>').appendTo('body')
+		$('<a href="#name:YourName">2. Say "Hello"</a>').click(function() {
+			var name = prompt('Enter your name:', '') || 'Anonymous'
+			location.hash = '#name:'+name
+			return false
+		}).appendTo(info)
+		return function() {
+			info.remove()
+		}
+	},
+	test: function() {
+		alert('Wellcome to "#test" location.\nTry click "back" in your browser.')
+	}
+})
+
+// dynamic url:
+$.router(function(hash) {
+	var result = /^name:(.+)$/.exec(hash)
+	if (result) {
+		// return action
+		return function() {
+			alert('Hello, '+result[1])
+			return function() {
+				alert('Goodbye, '+result[1])
+			}
+		}
+	}
+})
+</script>
