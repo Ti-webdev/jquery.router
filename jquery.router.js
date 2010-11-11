@@ -13,7 +13,7 @@
  * 		},
  * 		feedback: function() {
  * 			alert('show feedback form')
- * 			$.router.change(function() { alert('hide callback') })
+ * 			$.router.rollback(function() { alert('hide callback') })
  * 		}
  * })
  * 
@@ -34,7 +34,7 @@
  * var hash = $.router.pop()
  *
  * remove all actions:
- * $.router.clean()
+ * $.router.remove()
  * 
  * The BSD licenses
  * http://en.wikipedia.org/wiki/BSD_licenses
@@ -44,6 +44,12 @@
  * @author Ti
  * @see $.history
  */
+
+/**
+ * 1. include $.history plugin
+ * 2. define $.router plugin
+ */
+
 
 /*
  * jQuery history plugin
@@ -244,69 +250,121 @@
 
 
 (function($) {
-	var actions = {}
-	var actionsFns = []
+	var list = []
 	var history = []
 
-
-	var run = function(hash) {
-		// ищем в таблице
-		if (actions[hash]) {
-			runFn(actions[hash])
+	var RouterRegExp = function(regExp, init, rollback) {
+		var matches
+		this.test = function(hash) {
+			matches = regExp.exec(hash)
+			return matches && true
 		}
-		// 
-		else if (actionsFns.length) {
-			for(var i = 0; i < actionsFns.length; i++) {
-				var fn = actionsFns[i](hash)
-				if (fn) {
-					runFn(fn)
-					break
+		this.exec = function() {
+			return init.apply(null, matches) || rollback
+		}
+		this.remove = function(sign) {
+			if (regExp == sign) return true
+			if (init == sign) return true
+			if (rollback == sign) delete rollback
+			return false
+		}
+	}
+	var RouterStatic = function(name, init, rollback) {
+		this.test = function(hash) {
+			return name == hash
+		}
+		this.exec = function() {
+			return init() || rollback
+		}
+		this.remove = function(sign) {
+			if (name == sign) return true
+			if (init == sign) return true
+			if (rollback == sign) delete rollback
+			return false
+		}
+	}
+	var RouterMap = function(map, rollback) {
+		var init
+		this.test = function(hash) {
+			init = map[hash]
+			return init && true
+		}
+		this.exec = function(hash) {
+			return init() || rollback
+		}
+		this.remove = function(sign) {
+			if (map == sign) return true
+
+			do {
+				var found
+				$.each(map, function(key, value) {
+					if (key == sign || value == sign) {
+						found = key
+						return false
+					}
+				})
+				if (found) {
+					delete map[found]
 				}
 			}
+			while(found)
+
+			if (init == sign) return true
+			if (rollback == sign) delete rollback
+			return false
 		}
-		// в историю
-		history.push(hash)
 	}
-	
-	
-	function runFn(fn) {
-		var change = fn()
-		if ('function' == typeof change) $.router.change(change)
-	}
-
-
-	$.router = function(key, callback) {
-		var hash = $.router.last()
-
-		// ключ - действие
-		if (callback) {
-			actions[key] = callback
-			// если добавили с текущим хешом - запускаем
-			if (key == hash) run($.router.pop())
-			return $
+	var RouterCallback = function(callback, rollback) {
+		var init, hash
+		this.test = function(hash) {
+			init = callback(hash)
+			return init && true
 		}
-		
-		// метод опеределяющий действие
-		if ('function' == typeof key) {
-			var fn = key
-			actionsFns.push(fn)
+		this.exec = function() {
+			return init() || rollback
+		}
+		this.remove = function(sign) {
+			if (callback == sign) return true
+			if (rollback == sign) delete rollback
+			return false
+		}
+	}
 
-			// пробуем
-			var result = fn(hash)
-			
-			if (result) {
-				$.router.pop()
-				runFn(result)
+	var run = function(hash) {
+		var i = list.length-1
+		while(0 <= i) {
+			if (list[i].test(hash)) {
+				runRouter(list[i])
 				history.push(hash)
+				break
 			}
-			return $
+			i--
 		}
+	}
 
-		// таблица действий
-		var table = key
-		actions = $.extend(actions, table)
+	var runRouter = function(router) {
+		rollback = router.exec()
+		if ('function' == typeof rollback) $.router.rollback(rollback)
+	}
+
+
+	$.router = function(key, callback, rollback) {
+		var r
+		if (key instanceof RegExp) r = new RouterRegExp(key, callback, rollback)
+		else if ('function' == typeof key) r = new RouterCallback(key, callback)
+		else if ('object' == typeof key) r = new RouterMap(key, callback)
+		else r = new RouterStatic(key, callback, rollback)
+		list.push(r)
+		var hash = $.router.last()
 		// если добавили с текущим хешом - запускаем
-		if (table[hash]) run($.router.pop())
+		if (r.test(hash)) {
+			// извлекаем текущий хеш из истории
+			$.router.pop()
+			// запуск
+			runRouter(r)
+			// ложим обратно в историю
+			history.push(hash)
+		}
 		return $
 	}
 
@@ -320,32 +378,30 @@
 		return history.pop()
 	}
 	
-	$.router.clean = function() {
-		actions = {}
-		actionsFns = []
-		return $
-	}
-	
-	$.router.remove = function() {
-		$(arguments).each(function(i, action) {
-			if ('function' == typeof action) {
-				var newFns = [], fn
-				while(fn = actionsFns.pop()) {
-					if (fn != action) newFns.push(fn) 
-				}
-				actionsFns = newFns
-			} 
-			else {
-				delete actions[action]
+	$.router.remove = function(remove) {
+		// без аргументов - очистить все
+		if (0 == arguments.length) {
+			list = []
+			return $
+		}
+
+		// убрать конкретные
+		$(arguments).each(function(i, signRoute) {
+			var r, newList = []
+			while(r = list.pop()) {
+				if (r.remove(signRoute)) continue
+				newFns.push(fn) 
 			}
+			list = newList
 		})
+
 		return $
 	}
 
 	/**
 	 * Устанавливает/запускает callback при изменении пути
 	 */
-	$.router.change = (function() {
+	$.router.rollback = (function() {
 		var callback = $.noop
 		return function(newCallback) {
 			if (newCallback) callback = newCallback
@@ -356,7 +412,7 @@
 	
 	var init = function() {
 		$.history.init(function(hash) {
-			$.router.change().change($.noop) // запускаем и обнуляем
+			$.router.rollback().rollback($.noop) // запускаем и обнуляем откат предыдущего действия
 			run(hash)
 		})
 	}
