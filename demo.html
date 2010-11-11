@@ -7,7 +7,7 @@ $.router({
 		var info = $('<div>This is #demo location.<br /><a href="#test">1. Open #test</a><br /></div>').appendTo('body')
 		$('<a href="#name:YourName">2. Say "Hello"</a>').click(function() {
 			var name = prompt('Enter your name:', '') || 'Anonymous'
-			location.hash = '#name:'+name
+			location.hash = 'name:'+name
 			return false
 		}).appendTo(info)
 		return function() {
