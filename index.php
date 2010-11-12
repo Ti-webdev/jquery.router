@@ -21,10 +21,21 @@ header('Content-Type: text/html; charset=UTF-8');
 	<h1>jQuery router plugin</h1>
 	<a href="jquery.router-0.4.js">Download jquery.router-0.4.js</a>
 	<p>Require <b>any</b> browser, <b>any</b> jQuery version</p>
-	<h2>Demo:</h2>
+	
+	<h2>Install:</h2>
 	<pre><code><?= htmlspecialchars(file_get_contents('demo.html')) ?></code></pre>
-	<a href="#demo">run demo</a>
-	<hr />
 	<? readfile('demo.html') ?>
+
+	<h2>Demo 1:</h2>
+	<pre><code><?= htmlspecialchars(file_get_contents('demo1.html')) ?></code></pre>
+	<? readfile('demo1.html') ?>
+	
+	<h2>Demo 2:</h2>
+	<pre><code><?= htmlspecialchars(file_get_contents('demo2.html')) ?></code></pre>
+	<? readfile('demo2.html') ?>
+	
+	<h2>Demo 3:</h2>
+	<pre><code><?= htmlspecialchars(file_get_contents('demo3.html')) ?></code></pre>
+	<? readfile('demo3.html') ?>
 </body>
 </html>
