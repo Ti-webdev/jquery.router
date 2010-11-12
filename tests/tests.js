@@ -39,7 +39,7 @@ $(function() {
 			location.hash = 'test-back-page-2'
 		})
 		location.hash = 'test-back-page-1'
-		setTimeout(start, 250)
+		setTimeout(start, 300)
 		/**
 		 * @todo test rollback
 		 */

@@ -15,7 +15,7 @@ $.router({
 			location.hash = 'name:'+name
 			return false
 		}).appendTo(info)
-		
+		$('<br />').appendTo(info)
 		$('<a href="#'+getDay()+'">3. Today only!</a>').appendTo(info)
 
 		return function() {
@@ -27,7 +27,7 @@ $.router({
 	}
 })
 
-// dynamic url:
+// RegExp:
 $.router(/^name:(.+)$/, function(m, user) {
 	alert('Hello, '+user)
 }, function(m, user) {
