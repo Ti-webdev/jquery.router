@@ -13,7 +13,7 @@
  * 		},
  * 		feedback: function() {
  * 			alert('show feedback form')
- * 			return function() { alert('hide callback') }
+ * 			$.route.leave(function() { alert('hide callback') })
  * 		}
  * })
  * 
