@@ -1,0 +1,14 @@
+<script type="text/javascript">
+var getDay = function() {
+	var d = new Date
+	return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()
+}
+
+$.router(function(hash) {
+	if (hash == getDay()) return function() {
+		alert('This is today URL')
+	}
+})
+
+document.write('<a href="#'+getDay()+'">Run today only!</a>')
+</script>

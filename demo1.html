@@ -1,0 +1,15 @@
+<a href="#name=Anonymous">Run demo 1</a>
+
+<script type="text/javascript">
+$.router(/^name=(.+)$/, function(m, user) {
+	alert('Hello, '+user)
+}, function(m, user) {
+	alert('Goodbye, '+user)
+})
+
+$('a[href=#name=Anonymous]').click(function() {
+	var name = prompt('Enter your name: ', '')
+	if (name) location.hash = 'name='+name
+	return false
+})
+</script>
