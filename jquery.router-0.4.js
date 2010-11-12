@@ -332,7 +332,7 @@
 			return false
 		}
 	}
-	var RouteLeave = function(callback) {
+	var RouterLeave = function(callback) {
 		this.test = function() { return false }
 		this.exec = function() { return false }
 		this.leave = function() {
@@ -429,7 +429,7 @@
 	
 	$.router.leave = function(fn) {
 		if ('function' !== typeof fn) throw new Error('Invalid leave callback. Function required!')
-		leaveRouter = new RouteLeave(fn)
+		leaveRouter = new RouterLeave(fn)
 		return $
 	}
 
