@@ -10,7 +10,7 @@ $(function() {
 			}
 		})
 		location.hash = 'test'
-		setTimeout(start, 200)
+		setTimeout(start, 300)
 		/**
 		 * @todo test rollback
 		 * @todo test delete
@@ -104,7 +104,7 @@ $(function() {
 			ok(true, 'rollback ok')
 		})
 		location.hash = 'test-callback'
-		setTimeout(start, 300)
+		setTimeout(start, 350)
 		/**
 		 * @todo test delete
 		 */
