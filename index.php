@@ -19,7 +19,8 @@ header('Content-Type: text/html; charset=UTF-8');
 </head>
 <body>
 	<h1>jQuery router plugin</h1>
-	<a href="jquery.router-0.4.js">Download jquery.router-0.4.js</a>
+	<a href="jquery.router-0.4.js">Download jquery.router-0.4.js</a>,
+	<a href="https://github.com/Ti-webdev/jquery.router/raw/master/jquery.router-0.4.js">latest version from github</a>
 	<p>Require <b>any</b> browser, <b>any</b> jQuery version</p>
 	
 	<h2>Install:</h2>

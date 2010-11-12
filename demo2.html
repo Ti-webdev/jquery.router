@@ -1,11 +1,6 @@
 <a href="#demo2">Run demo 2</a>
 
 <script type="text/javascript">
-var getDay = function() {
-	var d = new Date
-	return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()
-}
-
 $.router({
 	demo2: function() {
 		var info = $('<div>This is #demo location.<br /><a href="#test">Try open #test</a></div>').insertAfter('a[href=#demo2]')
