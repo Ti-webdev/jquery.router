@@ -13,7 +13,7 @@
  * 		},
  * 		feedback: function() {
  * 			alert('show feedback form')
- * 			$.router.rollback(function() { alert('hide callback') })
+ * 			return function() { alert('hide callback') }
  * 		}
  * })
  * 
@@ -36,7 +36,7 @@
  * The BSD licenses
  * http://en.wikipedia.org/wiki/BSD_licenses
  * 
- * @version 0.4
+ * @version 0.4.2
  * @url http://ti.y1.ru/jquery/router/
  * @author Ti
  * @see $.history
@@ -244,62 +244,55 @@
 })(jQuery);
 
 
-
-
 (function($) {
 	var list = []
 	var history = []
 
-	var RouterRegExp = function(regExp, init, rollback) {
-		var matches, _rollback
+	var RouterRegExp = function(regExp, init, leave) {
+		var matches, _leave
 		this.test = function(hash) {
 			matches = regExp.exec(hash)
 			return matches && true
 		}
 		this.exec = function() {
-			_rollback = init.apply(null, matches) || rollback
+			_leave = init.apply(null, matches) || leave
+			return 'function' == typeof _leave
 		}
-		this.rollback = function() {
-			if ('function' == typeof _rollback) _rollback.apply(matches)
+		this.leave = function() {
+			_leave.apply(null, matches)
 		}
 		this.remove = function(sign) {
 			if (regExp == sign) return true
 			if (init == sign) return true
-			if (rollback == sign) delete rollback
-			if (_rollback == sign) _rollback = null
+			if (leave == sign) delete leave
+			if (_leave == sign) _leave = null
 			return false
 		}
 	}
-	var RouterStatic = function(name, init, rollback) {
-		var _rollback
+	var RouterStatic = function(name, init, leave) {
 		this.test = function(hash) {
 			return name == hash
 		}
 		this.exec = function() {
-			_rollback = init() || rollback
-		}
-		this.rollback = function() {
-			if ('function' == typeof _rollback) _rollback()
+			this.leave = init() || leave
+			return 'function' == typeof this.leave
 		}
 		this.remove = function(sign) {
 			if (name == sign) return true
 			if (init == sign) return true
-			if (rollback == sign) delete rollback
-			if (_rollback == sign) _rollback = null
+			if (leave == sign) delete leave
 			return false
 		}
 	}
-	var RouterMap = function(map, rollback) {
-		var init, _rollback
+	var RouterMap = function(map, leave) {
+		var init
 		this.test = function(hash) {
 			init = map[hash]
 			return init && true
 		}
 		this.exec = function(hash) {
-			_rollback = init() || rollback
-		}
-		this.rollback = function() {
-			if ('function' == typeof _rollback) _rollback()
+			this.leave = init() || leave
+			return 'function' == typeof this.leave
 		}
 		this.remove = function(sign) {
 			if (map == sign) return true
@@ -319,28 +312,35 @@
 			while(found)
 
 			if (init == sign) return true
-			if (rollback == sign) delete rollback
-			if (_rollback == sign) _rollback = null
+			if (leave == sign) delete leave
 			return false
 		}
 	}
-	var RouterCallback = function(callback, rollback) {
-		var init, _rollback
+	var RouterCallback = function(callback, leave) {
+		var init
 		this.test = function(hash) {
 			init = callback(hash)
 			return init && true
 		}
 		this.exec = function() {
-			_rollback = init() || rollback
-		}
-		this.rollback = function() {
-			if ('function' == typeof _rollback) _rollback()
+			this.leave = init() || leave
+			return 'function' == typeof this.leave
 		}
 		this.remove = function(sign) {
 			if (callback == sign) return true
-			if (rollback == sign) delete rollback
-			if (_rollback == sign) _rollback = null
+			if (leave == sign) delete leave
 			return false
+		}
+	}
+	var RouteLeave = function(callback) {
+		this.test = function() { return false }
+		this.exec = function() { return false }
+		this.leave = function() {
+			callback()
+			$.router.remove(callback)
+		}
+		this.remove = function(sign) {
+			return callback == sign
 		}
 	}
 
@@ -355,23 +355,30 @@
 		}
 		history.push(hash)
 	}
+	
+	var runLeave = function() {
+		if (leaveRouter) {
+			leaveRouter.leave()
+			leaveRouter = null
+		}
+	}
 
 	var runRouter = function(router) {
-		router.exec()
-		prevRouter = router
+		if (router.exec()) leaveRouter = router
 	}
 
 
-	$.router = function(key, callback, rollback) {
+	$.router = function(key, callback, leave) {
 		var r
-		if (key instanceof RegExp) r = new RouterRegExp(key, callback, rollback)
+		if (key instanceof RegExp) r = new RouterRegExp(key, callback, leave)
 		else if ('function' == typeof key) r = new RouterCallback(key, callback)
 		else if ('object' == typeof key) r = new RouterMap(key, callback)
-		else r = new RouterStatic(key, callback, rollback)
+		else r = new RouterStatic(key, callback, leave)
 		list.push(r)
 		var hash = $.router.last()
 		// если добавили с текущим хешом - запускаем
 		if (r.test(hash)) {
+			runLeave()
 			// извлекаем текущий хеш из истории
 			$.router.pop()
 			// запуск
@@ -396,7 +403,7 @@
 		// без аргументов - очистить все
 		if (0 == arguments.length) {
 			list = []
-			prevRouter = null
+			leaveRouter = null
 			return $
 		}
 
@@ -404,23 +411,33 @@
 		$(arguments).each(function(i, signRoute) {
 			var r, newList = []
 			while(r = list.pop()) {
+				if (r.leave == signRoute) {
+					r.leave = null
+					if (leaveRouter == r) leaveRouter = null
+				}
 				if (r.remove(signRoute)) {
-					if (prevRouter == r) prevRouter = null
+					if (leaveRouter == r) leaveRouter = null
 					continue
 				}
-				newFns.push(fn) 
+				newList.push(r) 
 			}
 			list = newList
 		})
 
 		return $
 	}
+	
+	$.router.leave = function(fn) {
+		if ('function' !== typeof fn) throw new Error('Invalid leave callback. Function required!')
+		leaveRouter = new RouteLeave(fn)
+		return $
+	}
 
-	var prevRouter
+	var leaveRouter
 	
 	var init = function() {
 		$.history.init(function(hash) {
-			if (prevRouter) prevRouter.rollback()
+			runLeave()
 			run(hash)
 		})
 	}

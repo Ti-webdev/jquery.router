@@ -64,16 +64,19 @@ $(function() {
 	})
 
 
-	asyncTest('RegExp', 2, function() {
+	asyncTest('RegExp', 4, function() {
 		$.router.remove().router(/^id=(\d+)$/, function(match, actualId) {
+			equals(id, actualId, "id is fine");
+			equals(match, 'id='+id, 'match is fine');
+			location.hash = 'regexp-gone'			
+		}, function(match, actualId) {
 			equals(id, actualId, "id is fine");
 			equals(match, 'id='+id, 'match is fine');
 		})
 		var id = Math.floor(Math.random()*1000)
 		location.hash = 'id='+id
-		setTimeout(start, 100)
+		setTimeout(start, 200)
 		/**
-		 * @todo test rollback
 		 * @todo test delete
 		 */
 	})
@@ -105,5 +108,18 @@ $(function() {
 		/**
 		 * @todo test delete
 		 */
+	})
+
+
+	asyncTest('$.router.leave', 2, function() {
+		$.router.remove().router('test-leave', function() {
+			ok(true, 'callback called')
+			$.router.leave(function() {
+				ok(true, 'leave ok')				
+			})
+			location.hash = 'test-leave-gone'
+		})
+		location.hash = 'test-leave'
+		setTimeout(start, 200)
 	})
 })
