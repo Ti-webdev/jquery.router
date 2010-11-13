@@ -45,7 +45,7 @@ $(function() {
 		 */
 	})
 	
-	asyncTest('rouing map', 4, function() {
+	asyncTest('rouing map', 5, function() {
 		var result
 		var fn2 = function() {
 			result = 2
@@ -72,31 +72,50 @@ $(function() {
 					ok(true, 'leave is fine')
 				}
 			},
-			testTable2: fn2
+			testTable2: fn2,
+			testTable3: function() {
+				ok(true, 'map #3 is fine')
+			}
 		})
 		location.hash = 'testTable1'
 		setTimeout(function() {
-			equals(result, 3, "map is fine");
-			start()
+			equals(result, 3, "map remove is fine")
+			location.hash = 'testTable3'
+			setTimeout(start, 100)
 		}, 450)
 	})
 
 
-	asyncTest('RegExp', 4, function() {
-		$.router.remove().router(/^id=(\d+)$/, function(match, actualId) {
-			equals(id, actualId, "id is fine");
-			equals(match, 'id='+id, 'match is fine');
-			location.hash = 'regexp-gone'			
+	asyncTest('RegExp', 6, function() {
+		re = /^id=(\d+)$/
+		var result
+		$.router.remove().router(/^\dx\d+$/, function(m) {
+			if (!result) return ok(false, 'expect id!')
+
+			equals(result, 2, "remove is fine")
+			equals(m, '3x6', 'remove only one is fine')
+			location.hash = '#test-regexp-gone'
+		}).router(re, function(match, actualId) {
+			if (result) return ok(false, "remove is fail")
+			result = 1
+			equals(actualId, id, "enter id is fine")
+			equals(match, 'id='+id, 'enter match is fine')
+			location.hash = 'regexp-gone'
 		}, function(match, actualId) {
-			equals(id, actualId, "id is fine");
-			equals(match, 'id='+id, 'match is fine');
+			result = 2
+			equals(actualId, id, "leave id is fine")
+			equals(match, 'id='+id, 'leave match is fine')
+
+			// remove
+			$.router.remove(re)
+			location.hash = 'id='+Math.floor(Math.random()*1000)
+			setTimeout(function() {
+				location.hash = '3x6'
+			}, 110)
 		})
 		var id = Math.floor(Math.random()*1000)
 		location.hash = 'id='+id
-		setTimeout(start, 200)
-		/**
-		 * @todo test delete
-		 */
+		setTimeout(start, 450)
 	})
 
 
