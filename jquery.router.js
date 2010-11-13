@@ -36,7 +36,6 @@
  * The BSD licenses
  * http://en.wikipedia.org/wiki/BSD_licenses
  * 
- * @version 0.4.4
  * @url http://ti.y1.ru/jquery/router/
  * @author Ti
  * @see $.history
