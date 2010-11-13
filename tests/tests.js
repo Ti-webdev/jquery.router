@@ -6,23 +6,23 @@ $(function() {
 			ok(true, 'location #test is fine')
 			setTimeout(function() { location.hash = 'test-2' }, 50)
 			return function() {
-				ok(true, 'rollback #test is fine')
+				ok(true, 'leave #test is fine')
 			}
 		})
 		location.hash = 'test'
 		setTimeout(start, 300)
 		/**
-		 * @todo test rollback
+		 * @todo test leave
 		 * @todo test delete
 		 */
 	})
 	
-	asyncTest('simple routing, rollback as argument', 2, function () {
+	asyncTest('simple routing, leave as argument', 2, function () {
 		$.router.remove().router('test', function() {
 			ok(true, 'location #test is fine2')
 			location.hash = 'test-2'
 		}, function() {
-			ok(true, 'rollback #test is fine2')
+			ok(true, 'leave #test is fine2')
 		})
 		location.hash = 'test'
 		setTimeout(start, 200)
@@ -41,26 +41,44 @@ $(function() {
 		location.hash = 'test-back-page-1'
 		setTimeout(start, 300)
 		/**
-		 * @todo test rollback
+		 * @todo test leave
 		 */
 	})
 	
-	asyncTest('table rouing', 2, function() {
+	asyncTest('rouing map', 4, function() {
+		var result
+		var fn2 = function() {
+			result = 2
+			ok(true, 'table 2 is fine')
+			// remove using key:
+			$.router.remove('testTable1')
+			location.hash = 'testTable1'
+			setTimeout(function() {
+				// remove using callback
+				$.router.remove(fn2)
+				location.hash = 'testTable2'
+				result = 3
+			}, 110)
+		}
 		$.router.remove().router({
 			testTable1: function() {
+				if (result) ok(false, 'remove testTable1 is fail')
+				result = 1
 				ok(true, 'table 1 is fine')
-				location.hash = 'testTable2'
+				setTimeout(function() {
+					location.hash = 'testTable2'
+				}, 10)
+				return function() {
+					ok(true, 'leave is fine')
+				}
 			},
-			testTable2: function() {
-				ok(true, 'table 2 is fine')
-			}
+			testTable2: fn2
 		})
 		location.hash = 'testTable1'
-		setTimeout(start, 200)
-		/**
-		 * @todo test rollback
-		 * @todo test delete
-		 */
+		setTimeout(function() {
+			equals(result, 3, "map is fine");
+			start()
+		}, 450)
 	})
 
 
@@ -101,7 +119,7 @@ $(function() {
 				ok(true, 'callback 3, without action')
 			}
 		}, function() {
-			ok(true, 'rollback ok')
+			ok(true, 'leave ok')
 		})
 		location.hash = 'test-callback'
 		setTimeout(start, 350)

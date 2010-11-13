@@ -36,7 +36,7 @@
  * The BSD licenses
  * http://en.wikipedia.org/wiki/BSD_licenses
  * 
- * @version 0.4.2
+ * @version 0.4.3
  * @url http://ti.y1.ru/jquery/router/
  * @author Ti
  * @see $.history
@@ -298,7 +298,7 @@
 			if (map == sign) return true
 
 			do {
-				var found
+				var found = false
 				$.each(map, function(key, value) {
 					if (key == sign || value == sign) {
 						found = key
