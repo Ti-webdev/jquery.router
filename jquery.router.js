@@ -41,7 +41,9 @@
  * @see $.history
  */
 
+
 /**
+ * The structure of this file:
  * 1. include $.history plugin
  * 2. define $.router plugin
  */

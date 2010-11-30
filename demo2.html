@@ -3,7 +3,7 @@
 <script type="text/javascript">
 $.router({
 	demo2: function() {
-		var info = $('<div>This is #demo location.<br /><a href="#test">Try open #test</a></div>').insertAfter('a[href=#demo2]')
+		var info = $('<div>This is #demo2 location.<br /><a href="#test">Try open #test</a></div>').insertAfter('a[href=#demo2]')
 		return function() {
 			info.remove()
 		}
