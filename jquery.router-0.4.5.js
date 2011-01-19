@@ -39,6 +39,7 @@
  * @url http://ti.y1.ru/jquery/router/
  * @author Ti
  * @see $.history
+ * @version 0.4.5
  */
 
 
@@ -245,79 +246,7 @@
 })(jQuery);
 
 
-(function($, plugin) {
-	$[plugin] = function(key, callback, leave) {
-		var r
-		if (key instanceof RegExp) r = new RouterRegExp(key, callback, leave)
-		else if ('function' == typeof key) r = new RouterCallback(key, callback)
-		else if ('object' == typeof key) r = new RouterMap(key, callback)
-		else r = new RouterStatic(key, callback, leave)
-		list.push(r)
-		var hash = $.router.last()
-		// если добавили с текущим хешом - запускаем
-		if (r.test(hash)) {
-			runLeave()
-			// извлекаем текущий хеш из истории
-			$.router.pop()
-			// запуск
-			runRouter(r)
-			// ложим обратно в историю
-			history.push(hash)
-		}
-		return $
-	}
-	$[plugin] = $.extend($[plugin], {
-		hasHistory: function() {
-			return 0 < history.length
-		},
-
-
-		last: function() {
-			return $[plugin].hasHistory() ? history[history.length-1] : ''
-		},
-
-
-		pop: function() {
-			return history.pop()
-		},
-
-
-		remove: function(remove) {
-			// без аргументов - очистить все
-			if (0 == arguments.length) {
-				list = []
-				leaveRouter = null
-				return $
-			}
-
-			// убрать конкретные
-			$(arguments).each(function(i, signRoute) {
-				var r, newList = []
-				while(r = list.pop()) {
-					if (r.leave == signRoute) {
-						r.leave = null
-						if (leaveRouter == r) leaveRouter = null
-					}
-					if (r.remove(signRoute)) {
-						if (leaveRouter == r) leaveRouter = null
-						continue
-					}
-					newList.push(r) 
-				}
-				list = newList
-			})
-
-			return $
-		},
-		
-		
-		leave: function(fn) {
-			if ('function' !== typeof fn) throw new Error('Invalid leave callback. Function required!')
-			leaveRouter = new RouterLeave(fn)
-			return $
-		}
-	})
-	
+(function($) {
 	var list = []
 	var history = []
 
@@ -410,7 +339,7 @@
 		this.exec = function() { return false }
 		this.leave = function() {
 			callback()
-			$[plugin].remove(callback)
+			$.router.remove(callback)
 		}
 		this.remove = function(sign) {
 			return callback == sign
@@ -440,6 +369,72 @@
 		if (router.exec()) leaveRouter = router
 	}
 
+
+	$.router = function(key, callback, leave) {
+		var r
+		if (key instanceof RegExp) r = new RouterRegExp(key, callback, leave)
+		else if ('function' == typeof key) r = new RouterCallback(key, callback)
+		else if ('object' == typeof key) r = new RouterMap(key, callback)
+		else r = new RouterStatic(key, callback, leave)
+		list.push(r)
+		var hash = $.router.last()
+		// если добавили с текущим хешом - запускаем
+		if (r.test(hash)) {
+			runLeave()
+			// извлекаем текущий хеш из истории
+			$.router.pop()
+			// запуск
+			runRouter(r)
+			// ложим обратно в историю
+			history.push(hash)
+		}
+		return $
+	}
+
+
+	$.router.last = function() {
+		return 0 < history.length ? history[history.length-1] : ''
+	}
+
+
+	$.router.pop = function() {
+		return history.pop()
+	}
+
+	$.router.remove = function(remove) {
+		// без аргументов - очистить все
+		if (0 == arguments.length) {
+			list = []
+			leaveRouter = null
+			return $
+		}
+
+		// убрать конкретные
+		$(arguments).each(function(i, signRoute) {
+			var r, newList = []
+			while(r = list.pop()) {
+				if (r.leave == signRoute) {
+					r.leave = null
+					if (leaveRouter == r) leaveRouter = null
+				}
+				if (r.remove(signRoute)) {
+					if (leaveRouter == r) leaveRouter = null
+					continue
+				}
+				newList.push(r) 
+			}
+			list = newList
+		})
+
+		return $
+	}
+	
+	$.router.leave = function(fn) {
+		if ('function' !== typeof fn) throw new Error('Invalid leave callback. Function required!')
+		leaveRouter = new RouterLeave(fn)
+		return $
+	}
+
 	var leaveRouter
 	
 	var init = function() {
@@ -451,4 +446,4 @@
 
 	if ($.browser.msie) $(window).load(init)
 	else init()
-})(jQuery, 'router');
+})(jQuery);
