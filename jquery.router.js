@@ -478,11 +478,10 @@
 			if (jQueryHistoryHashChangeCallback !== activeHashChangeCallback) return
 
 			isInitDone = true
-			if ($.browser.msie) $(window).load(init)
+			if ($.browser.msie) $(init)
 			else init()
 		}
 	})()
-
 
 	var initOnce = jQueryHistoryInitOnce
 })(jQuery, 'router');
