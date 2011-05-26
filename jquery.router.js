@@ -247,18 +247,19 @@
 
 (function($, plugin) {
 	$[plugin] = function(key, callback, leave) {
+		initOnce()
 		var r
 		if (key instanceof RegExp) r = new RouterRegExp(key, callback, leave)
 		else if ('function' == typeof key) r = new RouterCallback(key, callback)
 		else if ('object' == typeof key) r = new RouterMap(key, callback)
 		else r = new RouterStatic(key, callback, leave)
 		list.push(r)
-		var hash = $.router.last()
+		var hash = $[plugin].last()
 		// если добавили с текущим хешом - запускаем
 		if (r.test(hash)) {
 			runLeave()
 			// извлекаем текущий хеш из истории
-			$.router.pop()
+			$[plugin].pop()
 			// запуск
 			runRouter(r)
 			// ложим обратно в историю
@@ -266,6 +267,9 @@
 		}
 		return $
 	}
+
+	var activeHashChangeCallback
+
 	$[plugin] = $.extend($[plugin], {
 		hasHistory: function() {
 			return 0 < history.length
@@ -315,6 +319,25 @@
 			if ('function' !== typeof fn) throw new Error('Invalid leave callback. Function required!')
 			leaveRouter = new RouterLeave(fn)
 			return $
+		},
+
+
+		newChangeCallback: function(fn) {
+			activeHashChangeCallback = function(hash) {
+				if (activeHashChangeCallback === arguments.callee) {
+					runLeave()
+					run(hash)
+				}
+			}
+			initOnce = function() {}
+			return activeHashChangeCallback
+		},
+
+
+		restoreChangeCallback: function() {
+			activeHashChangeCallback = jQueryHistoryHashChangeCallback
+			initOnce = jQueryHistoryInitOnce
+			if (list.length) initOnce()
 		}
 	})
 	
@@ -441,14 +464,25 @@
 	}
 
 	var leaveRouter
-	
-	var init = function() {
-		$.history.init(function(hash) {
-			runLeave()
-			run(hash)
-		})
-	}
 
-	if ($.browser.msie) $(window).load(init)
-	else init()
+	var jQueryHistoryHashChangeCallback = $[plugin].newChangeCallback()
+	var jQueryHistoryInitOnce = (function() {
+		var isInitDone = false
+
+		var init = function() {
+			$.history.init(jQueryHistoryHashChangeCallback)
+		}
+
+		return function() {
+			if (isInitDone) return
+			if (jQueryHistoryHashChangeCallback !== activeHashChangeCallback) return
+
+			isInitDone = true
+			if ($.browser.msie) $(window).load(init)
+			else init()
+		}
+	})()
+
+
+	var initOnce = jQueryHistoryInitOnce
 })(jQuery, 'router');

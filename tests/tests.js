@@ -1,6 +1,31 @@
 $(function() {
 	location.hash = ''
-		
+
+	asyncTest('$.router.newChangeCallback', 2, function() {
+		var callback = $.router.newChangeCallback()
+		$.router.remove().router(function(hash) {
+			if ('test1' == hash) {
+				ok(true, '#test1 ok')
+				location.hash = 'test2'
+				setTimeout(function() {
+					callback('test3')
+				}, 200)
+				return
+			}
+			if ('test2' == hash) {
+				ok(false, '#test2 is fail')
+				return
+			}
+			if ('test3' == hash) {
+				ok(true, '#test3 ok')
+				location.hash = ''
+				$.router.restoreChangeCallback()
+			}
+		})
+		callback('test1')
+		setTimeout(start, 350)
+	})
+
 	asyncTest('simple routing', 2, function () {
 		$.router.remove().router('test', function() {
 			ok(true, 'location #test is fine')
