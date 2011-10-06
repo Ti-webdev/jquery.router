@@ -270,6 +270,7 @@
 
 	var activeHashChangeCallback
 	var active = true
+	var lastHash = null
 
 	$[plugin] = $.extend($[plugin], {
 		hasHistory: function() {
@@ -318,6 +319,7 @@
 
 		stop: function() {
 			active = false
+			lastHash = null
 			return this
 		},
 
@@ -325,7 +327,7 @@
 		start: function() {
 			active = true
 			jQueryHistoryInitOnce()
-			jQueryHistoryHashChangeCallback(location.hash)
+			jQueryHistoryHashChangeCallback(location.hash.replace(/^#/, ''))
 			return this
 		},
 		
@@ -339,7 +341,8 @@
 
 		newChangeCallback: function() {
 			activeHashChangeCallback = function(hash) {
-				if (active && activeHashChangeCallback === arguments.callee) {
+				if (active && lastHash !== hash && activeHashChangeCallback === arguments.callee) {
+					lastHash = hash
 					runLeave()
 					run(hash)
 				}

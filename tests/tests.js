@@ -1,20 +1,6 @@
 $(function() {
 	location.hash = ''
 
-	asyncTest('Two routes (issues #1)', 1, function() {
-		location.hash = 'bug'
-		$.router.remove()
-		$.router.stop()
-		$.router(/.+/, function() {
-			ok(false, "'.+' section has been called")
-		})
-		$.router(/bug/, function() {
-			ok(true, "'bug' section has been called")
-		})
-		$.router.start()
-		setTimeout(start, 200)
-	})
-
 	asyncTest('$.router.newChangeCallback', 2, function() {
 		var callback = $.router.newChangeCallback()
 		$.router.remove().router(function(hash) {
@@ -122,6 +108,41 @@ $(function() {
 			location.hash = 'testTable3'
 			setTimeout(start, 100)
 		}, 450)
+	})
+
+
+	asyncTest('Two routes, without timeout', 1, function() {
+		location.hash = 'bug'
+		$.router.remove()
+		$.router.stop()
+		$.router(/.+/, function() {
+			ok(false, "'.+' section has been called")
+		})
+		$.router(/bug/, function() {
+			ok(true, "'bug' section has been called")
+		})
+		$.router.start()
+		setTimeout(function() {
+			start()
+			location.hash = ''
+		}, 200)
+	})
+
+
+	asyncTest('Two routes (issues #1)', 1, function() {
+		location.hash = 'bug'
+		$.router.remove()
+		$.router.stop()
+		$.router(/.+/, function() {
+			ok(false, "'.+' section has been called")
+		})
+		$.router(/bug/, function() {
+			ok(true, "'bug' section has been called")
+		})
+		setTimeout(function() {
+			$.router.start()
+			setTimeout(start, 200)
+		}, 200)
 	})
 
 
