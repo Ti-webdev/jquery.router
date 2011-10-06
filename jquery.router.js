@@ -256,7 +256,7 @@
 		list.push(r)
 		var hash = $[plugin].last()
 		// если добавили с текущим хешом - запускаем
-		if (r.test(hash)) {
+		if (active && r.test(hash)) {
 			runLeave()
 			// извлекаем текущий хеш из истории
 			$[plugin].pop()
@@ -269,6 +269,7 @@
 	}
 
 	var activeHashChangeCallback
+	var active = true
 
 	$[plugin] = $.extend($[plugin], {
 		hasHistory: function() {
@@ -313,6 +314,20 @@
 
 			return $
 		},
+
+
+		stop: function() {
+			active = false
+			return this
+		},
+
+
+		start: function() {
+			active = true
+			jQueryHistoryInitOnce()
+			jQueryHistoryHashChangeCallback(location.hash)
+			return this
+		},
 		
 		
 		leave: function(fn) {
@@ -322,9 +337,9 @@
 		},
 
 
-		newChangeCallback: function(fn) {
+		newChangeCallback: function() {
 			activeHashChangeCallback = function(hash) {
-				if (activeHashChangeCallback === arguments.callee) {
+				if (active && activeHashChangeCallback === arguments.callee) {
 					runLeave()
 					run(hash)
 				}

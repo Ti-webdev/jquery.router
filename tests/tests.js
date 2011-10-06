@@ -1,6 +1,20 @@
 $(function() {
 	location.hash = ''
 
+	asyncTest('Two routes (issues #1)', 1, function() {
+		location.hash = 'bug'
+		$.router.remove()
+		$.router.stop()
+		$.router(/.+/, function() {
+			ok(false, "'.+' section has been called")
+		})
+		$.router(/bug/, function() {
+			ok(true, "'bug' section has been called")
+		})
+		$.router.start()
+		setTimeout(start, 200)
+	})
+
 	asyncTest('$.router.newChangeCallback', 2, function() {
 		var callback = $.router.newChangeCallback()
 		$.router.remove().router(function(hash) {
